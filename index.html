@@ -3,198 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRIS的藝術空間 - Art Deco Figurine Shop</title>
+    <title>IRIS 的藝術空間 - 旗艦正式版</title>
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --gold: #D4AF37;
-            --dark-bg: #1A1A1A;
-            --card-bg: #252525;
-            --cream: #F5F5DC;
+        :root { --gold: #D4AF37; --dark-bg: #1A1A1A; --card-bg: #252525; --cream: #F5F5DC; }
+        
+        /* 1. 統一標楷體呈現 */
+        body, input, textarea, button, h1, h2, h3 {
+            font-family: "標楷體", "DFKai-SB", "BiauKai", serif;
+            background-color: var(--dark-bg); color: var(--cream);
         }
+        body { margin: 0; padding: 0; overflow-x: hidden; }
 
-        /* 規定一律使用標楷體 */
-        body, input, textarea, button, select, label {
-            font-family: "DFKai-SB", "BiauKai", "標楷體", "Playfair Display", serif;
-            background-color: var(--dark-bg);
-            color: var(--cream);
-        }
+        nav { padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.9); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--gold); }
+        .btn-nav { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; cursor: pointer; transition: 0.3s; }
+        
+        .hero { height: 25vh; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 5px double var(--gold); background: linear-gradient(135deg, #1a1a1a 25%, #222 25%, #222 50%, #1a1a1a 50%, #1a1a1a 75%, #222 75%, #222 100%); background-size: 40px 40px; }
+        .brand-title { font-size: 2rem; color: var(--gold); letter-spacing: 8px; border: 3px solid var(--gold); padding: 10px 20px; }
 
-        body {
-            margin: 0; padding: 0;
-            overflow-x: hidden;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--card-bg); border: 2px solid var(--gold); padding: 25px; width: 90%; max-width: 450px; }
 
-        /* 導覽列 */
-        nav {
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0,0,0,0.8);
-            position: sticky; top: 0; z-index: 1000;
-            border-bottom: 1px solid var(--gold);
-        }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; padding: 30px; }
+        .product-card { border: 2px solid var(--gold); padding: 20px; background: var(--card-bg); text-align: center; position: relative; }
+        .product-card img { width: 100%; height: 280px; object-fit: contain; background: #111; border-bottom: 1px solid var(--gold); margin-bottom: 15px; }
 
-        .nav-buttons { display: flex; gap: 15px; }
-
-        .btn-nav {
-            background: transparent; border: 1px solid var(--gold); color: var(--gold);
-            padding: 8px 15px; cursor: pointer; font-size: 0.9rem; transition: 0.3s;
-        }
-        .btn-nav:hover { background: var(--gold); color: var(--dark-bg); }
-
-        /* PWA 安裝橫幅 */
-        #install-banner {
-            display: none; background: var(--gold); color: var(--dark-bg);
-            padding: 12px; text-align: center; font-weight: bold; cursor: pointer;
-            position: sticky; top: 70px; z-index: 999; letter-spacing: 2px;
-        }
-
-        .hero {
-            height: 30vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            text-align: center; border-bottom: 5px double var(--gold);
-            background: linear-gradient(135deg, #1a1a1a 25%, #222 25%, #222 50%, #1a1a1a 50%, #1a1a1a 75%, #222 75%, #222 100%);
-            background-size: 40px 40px;
-        }
-
-        .brand-title {
-            font-size: clamp(1.5rem, 5vw, 3rem); color: var(--gold);
-            letter-spacing: 8px; border: 3px solid var(--gold);
-            padding: 15px 30px; position: relative; text-transform: uppercase;
-        }
-
-        /* 彈窗樣式 */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center;
-        }
-
-        .modal-content {
-            background: var(--card-bg); border: 2px solid var(--gold);
-            padding: 30px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto;
-        }
-
-        /* 產品展示 - 修正圖片比例 */
-        .product-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 40px; padding: 40px;
-        }
-
-        .product-card {
-            border: 2px solid var(--gold); padding: 20px; background: var(--card-bg);
-            text-align: center; position: relative; transition: 0.4s;
-            display: flex; flex-direction: column;
-        }
-
-        .product-card img { 
-            width: 100%; height: 280px; object-fit: contain; 
-            background: #111; border-bottom: 1px solid var(--gold); margin-bottom: 15px;
-        }
-
-        .qty-controls {
-            display: flex; justify-content: center; align-items: center; gap: 10px; margin: 15px 0;
-        }
-
-        .qty-btn {
-            background: transparent; border: 1px solid var(--gold); color: var(--gold);
-            width: 30px; height: 30px; cursor: pointer; font-weight: bold;
-        }
-
-        .qty-input {
-            width: 50px; text-align: center; background: #333; border: 1px solid var(--gold); color: white;
-        }
-
-        .btn-action {
-            background: transparent; border: 2px solid var(--gold); color: var(--gold);
-            padding: 12px 20px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s;
-            text-transform: uppercase; margin-top: 10px;
-        }
-        .btn-action:hover { background: var(--gold); color: var(--dark-bg); }
-
-        /* 表單樣式 */
+        .btn-action { background: transparent; border: 2px solid var(--gold); color: var(--gold); padding: 12px 20px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
         .form-group { margin-bottom: 15px; display: flex; flex-direction: column; text-align: left;}
-        .form-group label { color: var(--gold); margin-bottom: 5px; font-size: 1rem;}
-        .form-group input, .form-group textarea { background: #333; border: 1px solid var(--gold); color: white; padding: 10px; font-family: "標楷體"; font-size: 1rem;}
+        .form-group label { color: var(--gold); margin-bottom: 5px; }
+        .form-group input { background: #333; border: 1px solid var(--gold); color: white; padding: 10px; }
 
-        /* 管理員介面 */
-        #admin-panel { display: none; max-width: 600px; margin: 30px auto; padding: 25px; border: 1px solid var(--gold); background: rgba(255,255,255,0.05); }
-        .delete-btn { position: absolute; top: 8px; right: 8px; background: #721c24; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+        #admin-panel { display: none; max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid var(--gold); }
+        .delete-btn { position: absolute; top: 8px; right: 8px; background: #721c24; color: white; border: none; padding: 5px 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <nav>
-        <div style="color:var(--gold); font-weight:bold; letter-spacing:2px;">IRIS ART</div>
-        <div class="nav-buttons">
+        <div style="color:var(--gold); font-weight:bold;">IRIS ART</div>
+        <div>
             <button class="btn-nav" onclick="openCart()">🛒 購物車 (<span id="cart-count">0</span>)</button>
-            <button id="auth-btn" class="btn-nav" onclick="toggleAuth()">管理員登入</button>
+            <button class="btn-nav" onclick="toggleAuth()">管理員</button>
         </div>
     </nav>
 
-    <div id="install-banner" onclick="handleInstall()">✨ 將「IRIS 藝廊」安裝到桌面 ✨</div>
-
     <div id="cart-modal" class="modal">
         <div class="modal-content">
-            <h2 style="color:var(--gold); border-bottom:1px solid var(--gold); padding-bottom:10px;">您的收藏清單</h2>
-            <div id="cart-items-list"></div>
-            <div style="margin-top:20px; text-align:right;">
-                <h3 id="cart-total">總計: NT$ 0</h3>
-            </div>
-            <button id="btn-to-checkout" class="btn-action" onclick="openCheckout()">前往確認訂單資訊</button>
-            <button class="btn-nav" style="width:100%; margin-top:10px; border:none;" onclick="closeCart()">繼續瀏覽</button>
+            <h2 style="color:var(--gold)">結帳資訊</h2>
+            <div class="form-group"><label>收件姓名 *</label><input type="text" id="cust-name"></div>
+            <div class="form-group"><label>您的 E-mail *</label><input type="email" id="cust-email"></div>
+            <button class="btn-action" onclick="submitOrder()">透過郵件發送訂單</button>
+            <button class="btn-nav" style="width:100%; border:none; margin-top:10px;" onclick="closeCart()">返回</button>
         </div>
     </div>
 
-    <div id="checkout-modal" class="modal">
-        <div class="modal-content">
-            <h2 style="color:var(--gold); border-bottom:1px solid var(--gold); padding-bottom:10px;">聯絡資訊</h2>
-            <div class="form-group">
-                <label>收件人姓名 *</label>
-                <input type="text" id="cust-name" placeholder="請輸入收件人真實姓名">
-            </div>
-            <div class="form-group">
-                <label>您的 E-mail *</label>
-                <input type="email" id="cust-email" placeholder="請輸入您的電子信箱">
-            </div>
-            <div class="form-group">
-                <label>聯絡電話 *</label>
-                <input type="tel" id="cust-phone" placeholder="請輸入聯絡手機">
-            </div>
-            <div class="form-group">
-                <label>收件地址 *</label>
-                <textarea id="cust-address" rows="2" placeholder="請輸入詳細地址或取件店號"></textarea>
-            </div>
-            <div id="order-summary-box" style="background:#111; padding:15px; margin:15px 0; border:1px dashed var(--gold); font-size:1rem;">
-                </div>
-            <button class="btn-action" onclick="submitOrder()">確認發送訂單</button>
-            <button class="btn-nav" style="width:100%; margin-top:10px; border:none;" onclick="closeCheckout()">返回購物車</button>
-        </div>
-    </div>
-
-    <div id="login-modal" class="modal">
-        <div class="modal-content" style="max-width:300px; text-align:center;">
-            <h2 style="color:var(--gold)">身分驗證</h2>
-            <div class="form-group"><label>帳號</label><input type="text" id="user-acc"></div>
-            <div class="form-group"><label>密碼</label><input type="password" id="user-pwd"></div>
-            <button class="btn-action" onclick="performLogin()">登入</button>
-            <p id="login-err" style="color:red; font-size:0.8rem; margin-top:10px;"></p>
-            <button class="btn-nav" style="margin-top:15px; border:none;" onclick="closeLogin()">取消</button>
-        </div>
-    </div>
-
-    <section class="hero">
-        <h1 class="brand-title">IRIS 的藝術空間</h1>
-        <p style="letter-spacing: 3px; margin-top: 15px;">極致工藝 ‧ 永恆收藏</p>
-    </section>
+    <section class="hero"><h1 class="brand-title">IRIS 的藝術空間</h1></section>
 
     <section id="admin-panel">
-        <h2 style="color:var(--gold); text-align:center;">新增收藏品</h2>
-        <div class="form-group"><label>1. 上傳照片</label><input type="file" id="imageInput" accept="image/*"></div>
+        <h2 style="text-align:center; color:var(--gold);">藝廊管理</h2>
+        <div class="form-group"><label>1. 上傳照片 (自動壓縮)</label><input type="file" id="imageInput" accept="image/*"></div>
         <div class="form-group"><label>2. 品名</label><input type="text" id="nameInput"></div>
-        <div class="form-group"><label>3. 價格 (TWD)</label><input type="number" id="priceInput"></div>
-        <button class="btn-action" onclick="addProduct()">確認發布</button>
+        <div class="form-group"><label>3. 價格</label><input type="number" id="priceInput"></div>
+        <button id="uploadBtn" class="btn-action" onclick="handleUpload()">確認新增</button>
     </section>
 
     <main class="product-grid" id="productGrid"></main>
@@ -204,156 +73,53 @@
         let cart = JSON.parse(localStorage.getItem('iris_cart')) || [];
         let isLoggedIn = sessionStorage.getItem('iris_login') === 'true';
 
-        function toggleAuth() {
-            if (isLoggedIn) {
-                if (confirm('確定登出管理員？')) { sessionStorage.removeItem('iris_login'); location.reload(); }
-            } else { document.getElementById('login-modal').style.display = 'flex'; }
-        }
-        function closeLogin() { document.getElementById('login-modal').style.display = 'none'; }
-        function performLogin() {
-            const acc = document.getElementById('user-acc').value;
-            const pwd = document.getElementById('user-pwd').value;
-            if (acc === 'iris' && pwd === '0927') {
-                sessionStorage.setItem('iris_login', 'true'); location.reload();
-            } else { document.getElementById('login-err').innerText = '驗證失敗'; }
-        }
-
-        function openCart() {
-            document.getElementById('cart-modal').style.display = 'flex';
-            renderCart();
-        }
-        function closeCart() { document.getElementById('cart-modal').style.display = 'none'; }
-
-        function addToCart(index) {
-            const qtyInput = document.getElementById(`qty-${index}`);
-            const qty = parseInt(qtyInput.value);
-            const product = products[index];
-            const existingIndex = cart.findIndex(item => item.name === product.name);
-            if (existingIndex > -1) { cart[existingIndex].qty += qty; } 
-            else { cart.push({ ...product, qty: qty }); }
-            saveCart();
-            alert(`已將 ${qty} 件「${product.name}」加入購物車`);
-        }
-
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            saveCart();
-            renderCart();
-        }
-
-        function saveCart() {
-            localStorage.setItem('iris_cart', JSON.stringify(cart));
-            updateCartBadge();
-        }
-
-        function updateCartBadge() {
-            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
-            document.getElementById('cart-count').innerText = totalItems;
-        }
-
-        function renderCart() {
-            const list = document.getElementById('cart-items-list');
-            let total = 0;
-            list.innerHTML = cart.length ? '' : '<p style="text-align:center;color:#888;">購物車是空的</p>';
-            cart.forEach((item, i) => {
-                const subtotal = item.price * item.qty;
-                total += subtotal;
-                list.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding:10px 0;">
-                        <div><strong>${item.name}</strong><br><small>NT$ ${Number(item.price).toLocaleString()} x ${item.qty}</small></div>
-                        <div style="text-align:right"><div>NT$ ${subtotal.toLocaleString()}</div>
-                        <button onclick="removeFromCart(${i})" style="color:red; background:none; border:none; cursor:pointer;">移除</button></div>
-                    </div>
-                `;
+        // --- 核心：專業圖片壓縮技術 ---
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const scale = Math.min(800 / img.width, 1);
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // 壓縮品質 0.6
+                    };
+                };
             });
-            document.getElementById('cart-total').innerText = `總計: NT$ ${total.toLocaleString()}`;
-            document.getElementById('btn-to-checkout').style.display = cart.length ? 'block' : 'none';
         }
 
-        function openCheckout() {
-            document.getElementById('cart-modal').style.display = 'none';
-            document.getElementById('checkout-modal').style.display = 'flex';
-            const summaryBox = document.getElementById('order-summary-box');
-            let total = 0, summaryHtml = "<strong>選購清單：</strong><br>";
-            cart.forEach(item => {
-                summaryHtml += `${item.name} x ${item.qty}<br>`;
-                total += item.price * item.qty;
-            });
-            summaryHtml += `<br><strong>預估總金額：NT$ ${total.toLocaleString()}</strong>`;
-            summaryBox.innerHTML = summaryHtml;
-        }
+        async function handleUpload() {
+            const name = document.getElementById('nameInput').value;
+            const price = document.getElementById('priceInput').value;
+            const file = document.getElementById('imageInput').files[0];
+            if (!name || !price || !file) return alert('請完整填寫');
 
-        function closeCheckout() {
-            document.getElementById('checkout-modal').style.display = 'none';
-            document.getElementById('cart-modal').style.display = 'flex';
-        }
-
-        function submitOrder() {
-            const name = document.getElementById('cust-name').value;
-            const buyerEmail = document.getElementById('cust-email').value;
-            const phone = document.getElementById('cust-phone').value;
-            const address = document.getElementById('cust-address').value;
-
-            if (!name || !buyerEmail || !phone || !address) return alert('請填寫完整資訊');
-
-            // 建立郵件內容
-            let subject = encodeURIComponent(`【IRIS 藝術空間訂單】顧客姓名：${name}`);
-            let body = `顧客姓名：${name}\r\n買家信箱：${buyerEmail}\r\n聯絡電話：${phone}\r\n收件地址：${address}\r\n\r\n訂單明細：\r\n`;
-            let total = 0;
-            cart.forEach(item => {
-                body += `- ${item.name} x ${item.qty} (小計：NT$ ${item.price * item.qty})\r\n`;
-                total += item.price * item.qty;
-            });
-            body += `\r\n總訂購金額：NT$ ${total.toLocaleString()}\r\n\r\n(請買家保留此信作為訂購憑證)`;
-            
-            // 同時發送給賣家與買家 (以逗號分隔收件者)
-            let mailtoLink = `mailto:william01.alltech@gmail.com,${buyerEmail}?subject=${subject}&body=${encodeURIComponent(body)}`;
-
-            window.location.href = mailtoLink;
-
-            alert('正在發送！請在開啟的郵件視窗中點擊「傳送」。買家亦會收到此信備存。');
-            
-            cart = [];
-            saveCart();
-            document.getElementById('checkout-modal').style.display = 'none';
-            location.reload();
+            const compressedBase64 = await compressImage(file);
+            try {
+                products.push({ name, price, image: compressedBase64 });
+                localStorage.setItem('iris_products', JSON.stringify(products));
+                renderProducts();
+                alert('上傳成功！');
+            } catch (e) { alert('儲存空間不足，請移除部分舊品。'); }
         }
 
         function renderProducts() {
             const grid = document.getElementById('productGrid');
-            grid.innerHTML = products.length ? '' : '<p style="grid-column:1/-1;text-align:center;color:#888;">藝廊目前無展品</p>';
-            products.forEach((p, i) => {
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.innerHTML = `
+            grid.innerHTML = products.map((p, i) => `
+                <div class="product-card">
                     ${isLoggedIn ? `<button class="delete-btn" onclick="deleteProduct(${i})">移除</button>` : ''}
                     <img src="${p.image}">
                     <h3>${p.name}</h3>
-                    <div style="font-size:1.1rem; color:var(--gold); margin-bottom:10px;">NT$ ${Number(p.price).toLocaleString()}</div>
-                    <div class="qty-controls">
-                        <button class="qty-btn" onclick="const el = document.getElementById('qty-${i}'); if(el.value > 1) el.stepDown()">-</button>
-                        <input type="number" id="qty-${i}" class="qty-input" value="1" min="1">
-                        <button class="qty-btn" onclick="document.getElementById('qty-${i}').stepUp()">+</button>
-                    </div>
+                    <p style="color:var(--gold)">NT$ ${Number(p.price).toLocaleString()}</p>
                     <button class="btn-action" onclick="addToCart(${i})">加入購物車</button>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        function addProduct() {
-            const name = document.getElementById('nameInput').value;
-            const price = document.getElementById('priceInput').value;
-            const file = document.getElementById('imageInput').files[0];
-            if (!name || !price || !file) return alert('請填寫完整資訊');
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                products.push({ name, price, image: e.target.result });
-                localStorage.setItem('iris_products', JSON.stringify(products));
-                renderProducts();
-            };
-            reader.readAsDataURL(file);
+                </div>
+            `).join('');
         }
 
         function deleteProduct(i) {
@@ -364,18 +130,34 @@
             }
         }
 
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); deferredPrompt = e;
-            document.getElementById('install-banner').style.display = 'block';
-        });
-        async function handleInstall() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; } }
+        function addToCart(i) {
+            cart.push(products[i]);
+            localStorage.setItem('iris_cart', JSON.stringify(cart));
+            document.getElementById('cart-count').innerText = cart.length;
+            alert('已收藏！');
+        }
+
+        function submitOrder() {
+            const n = document.getElementById('cust-name').value;
+            const e = document.getElementById('cust-email').value;
+            if (!n || !e) return alert('請填寫完整資訊');
+            let body = `顧客姓名：${n}\r\n訂單：\r\n` + cart.map(i => `- ${i.name}`).join('\r\n');
+            window.location.href = `mailto:william01.alltech@gmail.com,${e}?subject=訂單-${n}&body=${encodeURIComponent(body)}`;
+            cart = []; localStorage.removeItem('iris_cart'); location.reload();
+        }
+
+        function toggleAuth() {
+            if (isLoggedIn) { sessionStorage.removeItem('iris_login'); location.reload(); }
+            else { const p = prompt('密碼：'); if(p==='0927') { sessionStorage.setItem('iris_login','true'); location.reload(); } }
+        }
+
+        function openCart() { document.getElementById('cart-modal').style.display = 'flex'; }
+        function closeCart() { document.getElementById('cart-modal').style.display = 'none'; }
 
         window.onload = () => {
             if (isLoggedIn) document.getElementById('admin-panel').style.display = 'block';
             renderProducts();
-            updateCartBadge();
+            document.getElementById('cart-count').innerText = cart.length;
         };
     </script>
 </body>
