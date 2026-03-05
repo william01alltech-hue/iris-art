@@ -83,10 +83,12 @@
         const SUPABASE_KEY = "sb_publishable_PNexxWOrGUi9wSLv_VDiMw_QXH6Aw6o";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- 2. EmailJS 系統發信設定 (已寫入您的專屬金鑰) ---
+        // --- 2. EmailJS 系統發信設定 ---
         const EMAILJS_PUBLIC_KEY = "ALCpidIW3C2QAE48W"; 
         const EMAILJS_SERVICE_ID = "service_kzib859";
-        const EMAILJS_TEMPLATE_ID = "template_n6n5g1f";
+        
+        // 已更新為您最新取得的正確 Template ID！
+        const EMAILJS_TEMPLATE_ID = "template_6s7jtcr"; 
         
         // 初始化發信模組
         emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
@@ -178,7 +180,7 @@
             }
         }
 
-        // --- 5. 購物車與訂單系統 (已升級 EmailJS 全自動發送) ---
+        // --- 5. 購物車與訂單系統 ---
         function addToCart(name, price) {
             cart.push({ name, price });
             localStorage.setItem('iris_cart', JSON.stringify(cart));
@@ -208,10 +210,10 @@
                     cust_address: custAddress,
                     order_details: orderDetails + `\n\n總計金額：NT$ ${total.toLocaleString()}`
                 });
-                alert('訂單發送成功！買賣雙方 (包含 weimingyin19@gmail.com) 均會收到系統郵件通知。');
+                alert('訂單發送成功！買賣雙方均會收到系統郵件通知。');
                 cart = []; localStorage.removeItem('iris_cart'); location.reload();
             } catch (err) { 
-                alert('發信失敗，請檢查 EmailJS 設定是否正確：' + JSON.stringify(err)); 
+                alert('發信失敗，請檢查 EmailJS 設定是否正確：\n' + JSON.stringify(err)); 
                 btn.innerText = "確認訂購 (系統發送通知)"; btn.disabled = false; 
             }
         }
