@@ -83,15 +83,13 @@
         const SUPABASE_KEY = "sb_publishable_PNexxWOrGUi9wSLv_VDiMw_QXH6Aw6o";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- 2. EmailJS 系統發信設定 (暫存區) ---
-        // 請在未來填入您的 EmailJS 金鑰。在未填入前，訂單將自動改用預設郵件軟體 (mailto) 發送。
-        const EMAILJS_PUBLIC_KEY = "請填入_EMAILJS_PUBLIC_KEY"; 
-        const EMAILJS_SERVICE_ID = "請填入_SERVICE_ID";
-        const EMAILJS_TEMPLATE_ID = "請填入_TEMPLATE_ID";
+        // --- 2. EmailJS 系統發信設定 (已寫入您的專屬金鑰) ---
+        const EMAILJS_PUBLIC_KEY = "ALCpidIW3C2QAE48W"; 
+        const EMAILJS_SERVICE_ID = "service_kzib859";
+        const EMAILJS_TEMPLATE_ID = "template_n6n5g1f";
         
-        if(EMAILJS_PUBLIC_KEY !== "請填入_EMAILJS_PUBLIC_KEY") {
-            emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-        }
+        // 初始化發信模組
+        emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
         let cart = JSON.parse(localStorage.getItem('iris_cart')) || [];
         let isLoggedIn = sessionStorage.getItem('iris_login') === 'true';
@@ -101,7 +99,7 @@
             const { data, error } = await _supabase.from('figurines').select('*').order('created_at', { ascending: false });
             if (error) {
                 console.error('讀取失敗:', error);
-                document.getElementById('productGrid').innerHTML = '<h3 style="color:white; text-align:center; width:100%;">無法連線到資料庫，請確認 Storage 與 Database 的 RLS 權限已關閉。</h3>';
+                document.getElementById('productGrid').innerHTML = '<h3 style="color:white; text-align:center; width:100%;">無法連線到資料庫，請確認權限。</h3>';
             } else {
                 renderProducts(data);
             }
@@ -135,7 +133,6 @@
                         canvas.height = img.height * scale;
                         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
                         
-                        // 將 Canvas 轉為 Blob 以便上傳至 Supabase
                         canvas.toBlob((blob) => {
                             resolve(new File([blob], file.name, { type: 'image/jpeg' }));
                         }, 'image/jpeg', 0.6);
@@ -157,22 +154,19 @@
                 const compressedFile = await compressImage(fileInput);
                 const fileName = `${Date.now()}_${compressedFile.name}`;
 
-                // 上傳照片到 Supabase Storage
                 const { error: uploadError } = await _supabase.storage.from('images').upload(fileName, compressedFile);
                 if (uploadError) throw uploadError;
 
-                // 取得照片的公開網址
                 const { data: urlData } = _supabase.storage.from('images').getPublicUrl(fileName);
                 const imageUrl = urlData.publicUrl;
 
-                // 將資料寫入 Database
                 const { error: dbError } = await _supabase.from('figurines').insert([{ name, price, image_url: imageUrl }]);
                 if (dbError) throw dbError;
 
                 alert('雲端新增成功！手機現在也能立刻看到了。');
                 location.reload();
             } catch (err) {
-                alert('發生錯誤，請確認 Supabase 權限是否開放：' + err.message);
+                alert('發生錯誤：' + err.message);
                 btn.innerText = "確認新增並同步至雲端"; btn.disabled = false;
             }
         }
@@ -184,7 +178,7 @@
             }
         }
 
-        // --- 5. 購物車與訂單系統 ---
+        // --- 5. 購物車與訂單系統 (已升級 EmailJS 全自動發送) ---
         function addToCart(name, price) {
             cart.push({ name, price });
             localStorage.setItem('iris_cart', JSON.stringify(cart));
@@ -204,16 +198,8 @@
             const orderDetails = cart.map(i => `- ${i.name} (NT$ ${Number(i.price).toLocaleString()})`).join('\n');
             let total = cart.reduce((sum, item) => sum + Number(item.price), 0);
 
-            // 如果 EmailJS 金鑰還沒填，自動退回使用裝置內建的 mailto 功能
-            if(EMAILJS_PUBLIC_KEY === "請填入_EMAILJS_PUBLIC_KEY") {
-                let body = `顧客姓名：${custName}\r\n買家信箱：${custEmail}\r\n聯絡電話：${custPhone}\r\n收件地址：${custAddress}\r\n\r\n訂單明細：\r\n${orderDetails}\r\n\r\n總計金額：NT$ ${total.toLocaleString()}`;
-                window.location.href = `mailto:william01.alltech@gmail.com,${custEmail}?subject=【IRIS 藝術空間】新訂單 - ${custName}&body=${encodeURIComponent(body)}`;
-                cart = []; localStorage.removeItem('iris_cart'); location.reload();
-                return;
-            }
-
-            // 系統自動發信邏輯 (需完成 EmailJS 設定)
-            btn.innerText = "系統發信中..."; btn.disabled = true;
+            // 系統自動發信邏輯 (透過 EmailJS)
+            btn.innerText = "系統自動發信中..."; btn.disabled = true;
             try {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
                     cust_name: custName,
@@ -222,10 +208,10 @@
                     cust_address: custAddress,
                     order_details: orderDetails + `\n\n總計金額：NT$ ${total.toLocaleString()}`
                 });
-                alert('訂單發送成功！買家與賣家均會收到系統郵件。');
+                alert('訂單發送成功！買賣雙方 (包含 weimingyin19@gmail.com) 均會收到系統郵件通知。');
                 cart = []; localStorage.removeItem('iris_cart'); location.reload();
             } catch (err) { 
-                alert('發信失敗，請檢查 EmailJS 金鑰：' + JSON.stringify(err)); 
+                alert('發信失敗，請檢查 EmailJS 設定是否正確：' + JSON.stringify(err)); 
                 btn.innerText = "確認訂購 (系統發送通知)"; btn.disabled = false; 
             }
         }
