@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRIS 的藝術空間 - 旗艦正式版</title>
+    <title>IRIS 的藝術空間 - 雲端旗艦版</title>
     <link rel="manifest" href="manifest.json">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
     <style>
         :root { --gold: #D4AF37; --dark-bg: #1A1A1A; --card-bg: #252525; --cream: #F5F5DC; }
         
-        /* 1. 統一標楷體呈現 */
+        /* 全站統一標楷體 */
         body, input, textarea, button, h1, h2, h3 {
             font-family: "標楷體", "DFKai-SB", "BiauKai", serif;
             background-color: var(--dark-bg); color: var(--cream);
@@ -17,29 +21,32 @@
 
         nav { padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.9); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--gold); }
         .btn-nav { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; cursor: pointer; transition: 0.3s; }
+        .btn-nav:hover { background: var(--gold); color: var(--dark-bg); }
         
         .hero { height: 25vh; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 5px double var(--gold); background: linear-gradient(135deg, #1a1a1a 25%, #222 25%, #222 50%, #1a1a1a 50%, #1a1a1a 75%, #222 75%, #222 100%); background-size: 40px 40px; }
-        .brand-title { font-size: 2rem; color: var(--gold); letter-spacing: 8px; border: 3px solid var(--gold); padding: 10px 20px; }
+        .brand-title { font-size: 2rem; color: var(--gold); letter-spacing: 8px; border: 3px solid var(--gold); padding: 10px 20px; text-transform: uppercase; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: var(--card-bg); border: 2px solid var(--gold); padding: 25px; width: 90%; max-width: 450px; }
+        .modal-content { background: var(--card-bg); border: 2px solid var(--gold); padding: 25px; width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; }
 
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; padding: 30px; }
-        .product-card { border: 2px solid var(--gold); padding: 20px; background: var(--card-bg); text-align: center; position: relative; }
+        .product-card { border: 2px solid var(--gold); padding: 20px; background: var(--card-bg); text-align: center; position: relative; transition: 0.4s; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
         .product-card img { width: 100%; height: 280px; object-fit: contain; background: #111; border-bottom: 1px solid var(--gold); margin-bottom: 15px; }
 
         .btn-action { background: transparent; border: 2px solid var(--gold); color: var(--gold); padding: 12px 20px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        .btn-action:hover { background: var(--gold); color: var(--dark-bg); }
         .form-group { margin-bottom: 15px; display: flex; flex-direction: column; text-align: left;}
         .form-group label { color: var(--gold); margin-bottom: 5px; }
-        .form-group input { background: #333; border: 1px solid var(--gold); color: white; padding: 10px; }
+        .form-group input, .form-group textarea { background: #333; border: 1px solid var(--gold); color: white; padding: 10px; font-size: 1rem; }
 
-        #admin-panel { display: none; max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid var(--gold); }
+        #admin-panel { display: none; max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid var(--gold); background: rgba(255, 255, 255, 0.05); }
         .delete-btn { position: absolute; top: 8px; right: 8px; background: #721c24; color: white; border: none; padding: 5px 10px; cursor: pointer; }
     </style>
 </head>
 <body>
     <nav>
-        <div style="color:var(--gold); font-weight:bold;">IRIS ART</div>
+        <div style="color:var(--gold); font-weight:bold; letter-spacing:2px;">IRIS ART</div>
         <div>
             <button class="btn-nav" onclick="openCart()">🛒 購物車 (<span id="cart-count">0</span>)</button>
             <button class="btn-nav" onclick="toggleAuth()">管理員</button>
@@ -48,32 +55,72 @@
 
     <div id="cart-modal" class="modal">
         <div class="modal-content">
-            <h2 style="color:var(--gold)">結帳資訊</h2>
+            <h2 style="color:var(--gold); border-bottom:1px solid var(--gold); padding-bottom:10px;">訂購與收件資訊</h2>
             <div class="form-group"><label>收件姓名 *</label><input type="text" id="cust-name"></div>
             <div class="form-group"><label>您的 E-mail *</label><input type="email" id="cust-email"></div>
-            <button class="btn-action" onclick="submitOrder()">透過郵件發送訂單</button>
-            <button class="btn-nav" style="width:100%; border:none; margin-top:10px;" onclick="closeCart()">返回</button>
+            <div class="form-group"><label>聯絡電話 *</label><input type="tel" id="cust-phone"></div>
+            <div class="form-group"><label>收件地址 *</label><textarea id="cust-address"></textarea></div>
+            <button id="submitBtn" class="btn-action" onclick="submitOrder()">確認訂購 (系統發送通知)</button>
+            <button class="btn-nav" style="width:100%; border:none; margin-top:10px;" onclick="closeCart()">返回藝廊</button>
         </div>
     </div>
 
     <section class="hero"><h1 class="brand-title">IRIS 的藝術空間</h1></section>
 
     <section id="admin-panel">
-        <h2 style="text-align:center; color:var(--gold);">藝廊管理</h2>
-        <div class="form-group"><label>1. 上傳照片 (自動壓縮)</label><input type="file" id="imageInput" accept="image/*"></div>
+        <h2 style="text-align:center; color:var(--gold);">雲端展品上架系統</h2>
+        <div class="form-group"><label>1. 上傳公仔照片 (系統會自動壓縮)</label><input type="file" id="imageInput" accept="image/*"></div>
         <div class="form-group"><label>2. 品名</label><input type="text" id="nameInput"></div>
-        <div class="form-group"><label>3. 價格</label><input type="number" id="priceInput"></div>
-        <button id="uploadBtn" class="btn-action" onclick="handleUpload()">確認新增</button>
+        <div class="form-group"><label>3. 價格 (TWD)</label><input type="number" id="priceInput"></div>
+        <button id="uploadBtn" class="btn-action" onclick="handleUpload()">確認新增並同步至雲端</button>
     </section>
 
     <main class="product-grid" id="productGrid"></main>
 
     <script>
-        let products = JSON.parse(localStorage.getItem('iris_products')) || [];
+        // --- 1. Supabase 雲端資料庫設定 ---
+        const SUPABASE_URL = "https://orjixadarchipiissgol.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_PNexxWOrGUi9wSLv_VDiMw_QXH6Aw6o";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // --- 2. EmailJS 系統發信設定 (暫存區) ---
+        // 請在未來填入您的 EmailJS 金鑰。在未填入前，訂單將自動改用預設郵件軟體 (mailto) 發送。
+        const EMAILJS_PUBLIC_KEY = "請填入_EMAILJS_PUBLIC_KEY"; 
+        const EMAILJS_SERVICE_ID = "請填入_SERVICE_ID";
+        const EMAILJS_TEMPLATE_ID = "請填入_TEMPLATE_ID";
+        
+        if(EMAILJS_PUBLIC_KEY !== "請填入_EMAILJS_PUBLIC_KEY") {
+            emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+        }
+
         let cart = JSON.parse(localStorage.getItem('iris_cart')) || [];
         let isLoggedIn = sessionStorage.getItem('iris_login') === 'true';
 
-        // --- 核心：專業圖片壓縮技術 ---
+        // --- 3. 讀取雲端資料 ---
+        async function fetchProducts() {
+            const { data, error } = await _supabase.from('figurines').select('*').order('created_at', { ascending: false });
+            if (error) {
+                console.error('讀取失敗:', error);
+                document.getElementById('productGrid').innerHTML = '<h3 style="color:white; text-align:center; width:100%;">無法連線到資料庫，請確認 Storage 與 Database 的 RLS 權限已關閉。</h3>';
+            } else {
+                renderProducts(data);
+            }
+        }
+
+        function renderProducts(products) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = products.map((p) => `
+                <div class="product-card">
+                    ${isLoggedIn ? `<button class="delete-btn" onclick="deleteProduct(${p.id})">移除</button>` : ''}
+                    <img src="${p.image_url}" alt="${p.name}">
+                    <h3>${p.name}</h3>
+                    <p style="color:var(--gold); font-size:1.2rem;">NT$ ${Number(p.price).toLocaleString()}</p>
+                    <button class="btn-action" onclick="addToCart('${p.name}', ${p.price})">加入購物車</button>
+                </div>
+            `).join('');
+        }
+
+        // --- 4. 圖片壓縮並上傳至雲端 ---
         async function compressImage(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -83,72 +130,109 @@
                     img.src = e.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
                         const scale = Math.min(800 / img.width, 1);
-                        canvas.width = img.width * scale;
+                        canvas.width = img.width * scale; 
                         canvas.height = img.height * scale;
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // 壓縮品質 0.6
+                        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // 將 Canvas 轉為 Blob 以便上傳至 Supabase
+                        canvas.toBlob((blob) => {
+                            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                        }, 'image/jpeg', 0.6);
                     };
                 };
             });
         }
 
         async function handleUpload() {
+            const btn = document.getElementById('uploadBtn');
+            const fileInput = document.getElementById('imageInput').files[0];
             const name = document.getElementById('nameInput').value;
             const price = document.getElementById('priceInput').value;
-            const file = document.getElementById('imageInput').files[0];
-            if (!name || !price || !file) return alert('請完整填寫');
 
-            const compressedBase64 = await compressImage(file);
+            if (!fileInput || !name || !price) return alert('請完整填寫資訊');
+            btn.innerText = "正在壓縮並同步雲端..."; btn.disabled = true;
+
             try {
-                products.push({ name, price, image: compressedBase64 });
-                localStorage.setItem('iris_products', JSON.stringify(products));
-                renderProducts();
-                alert('上傳成功！');
-            } catch (e) { alert('儲存空間不足，請移除部分舊品。'); }
-        }
+                const compressedFile = await compressImage(fileInput);
+                const fileName = `${Date.now()}_${compressedFile.name}`;
 
-        function renderProducts() {
-            const grid = document.getElementById('productGrid');
-            grid.innerHTML = products.map((p, i) => `
-                <div class="product-card">
-                    ${isLoggedIn ? `<button class="delete-btn" onclick="deleteProduct(${i})">移除</button>` : ''}
-                    <img src="${p.image}">
-                    <h3>${p.name}</h3>
-                    <p style="color:var(--gold)">NT$ ${Number(p.price).toLocaleString()}</p>
-                    <button class="btn-action" onclick="addToCart(${i})">加入購物車</button>
-                </div>
-            `).join('');
-        }
+                // 上傳照片到 Supabase Storage
+                const { error: uploadError } = await _supabase.storage.from('images').upload(fileName, compressedFile);
+                if (uploadError) throw uploadError;
 
-        function deleteProduct(i) {
-            if (confirm('確定移除？')) {
-                products.splice(i, 1);
-                localStorage.setItem('iris_products', JSON.stringify(products));
-                renderProducts();
+                // 取得照片的公開網址
+                const { data: urlData } = _supabase.storage.from('images').getPublicUrl(fileName);
+                const imageUrl = urlData.publicUrl;
+
+                // 將資料寫入 Database
+                const { error: dbError } = await _supabase.from('figurines').insert([{ name, price, image_url: imageUrl }]);
+                if (dbError) throw dbError;
+
+                alert('雲端新增成功！手機現在也能立刻看到了。');
+                location.reload();
+            } catch (err) {
+                alert('發生錯誤，請確認 Supabase 權限是否開放：' + err.message);
+                btn.innerText = "確認新增並同步至雲端"; btn.disabled = false;
             }
         }
 
-        function addToCart(i) {
-            cart.push(products[i]);
-            localStorage.setItem('iris_cart', JSON.stringify(cart));
-            document.getElementById('cart-count').innerText = cart.length;
-            alert('已收藏！');
+        async function deleteProduct(id) {
+            if (confirm('確定從雲端永久移除這件展品？')) {
+                await _supabase.from('figurines').delete().eq('id', id);
+                location.reload();
+            }
         }
 
-        function submitOrder() {
-            const n = document.getElementById('cust-name').value;
-            const e = document.getElementById('cust-email').value;
-            if (!n || !e) return alert('請填寫完整資訊');
-            let body = `顧客姓名：${n}\r\n訂單：\r\n` + cart.map(i => `- ${i.name}`).join('\r\n');
-            window.location.href = `mailto:william01.alltech@gmail.com,${e}?subject=訂單-${n}&body=${encodeURIComponent(body)}`;
-            cart = []; localStorage.removeItem('iris_cart'); location.reload();
+        // --- 5. 購物車與訂單系統 ---
+        function addToCart(name, price) {
+            cart.push({ name, price });
+            localStorage.setItem('iris_cart', JSON.stringify(cart));
+            document.getElementById('cart-count').innerText = cart.length;
+            alert(`已將「${name}」加入收藏`);
+        }
+
+        async function submitOrder() {
+            const btn = document.getElementById('submitBtn');
+            const custName = document.getElementById('cust-name').value;
+            const custEmail = document.getElementById('cust-email').value;
+            const custPhone = document.getElementById('cust-phone').value;
+            const custAddress = document.getElementById('cust-address').value;
+            
+            if (!custName || !custEmail || !custPhone || !custAddress) return alert('請填寫完整收件資訊');
+            
+            const orderDetails = cart.map(i => `- ${i.name} (NT$ ${Number(i.price).toLocaleString()})`).join('\n');
+            let total = cart.reduce((sum, item) => sum + Number(item.price), 0);
+
+            // 如果 EmailJS 金鑰還沒填，自動退回使用裝置內建的 mailto 功能
+            if(EMAILJS_PUBLIC_KEY === "請填入_EMAILJS_PUBLIC_KEY") {
+                let body = `顧客姓名：${custName}\r\n買家信箱：${custEmail}\r\n聯絡電話：${custPhone}\r\n收件地址：${custAddress}\r\n\r\n訂單明細：\r\n${orderDetails}\r\n\r\n總計金額：NT$ ${total.toLocaleString()}`;
+                window.location.href = `mailto:william01.alltech@gmail.com,${custEmail}?subject=【IRIS 藝術空間】新訂單 - ${custName}&body=${encodeURIComponent(body)}`;
+                cart = []; localStorage.removeItem('iris_cart'); location.reload();
+                return;
+            }
+
+            // 系統自動發信邏輯 (需完成 EmailJS 設定)
+            btn.innerText = "系統發信中..."; btn.disabled = true;
+            try {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                    cust_name: custName,
+                    cust_email: custEmail,
+                    cust_phone: custPhone,
+                    cust_address: custAddress,
+                    order_details: orderDetails + `\n\n總計金額：NT$ ${total.toLocaleString()}`
+                });
+                alert('訂單發送成功！買家與賣家均會收到系統郵件。');
+                cart = []; localStorage.removeItem('iris_cart'); location.reload();
+            } catch (err) { 
+                alert('發信失敗，請檢查 EmailJS 金鑰：' + JSON.stringify(err)); 
+                btn.innerText = "確認訂購 (系統發送通知)"; btn.disabled = false; 
+            }
         }
 
         function toggleAuth() {
             if (isLoggedIn) { sessionStorage.removeItem('iris_login'); location.reload(); }
-            else { const p = prompt('密碼：'); if(p==='0927') { sessionStorage.setItem('iris_login','true'); location.reload(); } }
+            else { const p = prompt('請輸入管理員密碼：'); if(p==='0927') { sessionStorage.setItem('iris_login','true'); location.reload(); } else if (p) alert('密碼錯誤'); }
         }
 
         function openCart() { document.getElementById('cart-modal').style.display = 'flex'; }
@@ -156,7 +240,7 @@
 
         window.onload = () => {
             if (isLoggedIn) document.getElementById('admin-panel').style.display = 'block';
-            renderProducts();
+            fetchProducts();
             document.getElementById('cart-count').innerText = cart.length;
         };
     </script>
