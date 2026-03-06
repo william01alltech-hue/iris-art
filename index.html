@@ -13,7 +13,7 @@
         :root { --gold: #D4AF37; --dark-bg: #1A1A1A; --card-bg: #252525; --cream: #F5F5DC; }
         
         /* 全站統一標楷體 */
-        body, input, textarea, button, h1, h2, h3 {
+        body, input, textarea, button, h1, h2, h3, p {
             font-family: "標楷體", "DFKai-SB", "BiauKai", serif;
             background-color: var(--dark-bg); color: var(--cream);
         }
@@ -24,10 +24,10 @@
         .btn-nav:hover { background: var(--gold); color: var(--dark-bg); }
         
         .hero { height: 25vh; display: flex; flex-direction: column; justify-content: center; align-items: center; border-bottom: 5px double var(--gold); background: linear-gradient(135deg, #1a1a1a 25%, #222 25%, #222 50%, #1a1a1a 50%, #1a1a1a 75%, #222 75%, #222 100%); background-size: 40px 40px; }
-        .brand-title { font-size: 2rem; color: var(--gold); letter-spacing: 8px; border: 3px solid var(--gold); padding: 10px 20px; text-transform: uppercase; }
+        .brand-title { font-size: 2rem; color: var(--gold); letter-spacing: 8px; border: 3px solid var(--gold); padding: 10px 20px; text-transform: uppercase; text-align: center;}
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: var(--card-bg); border: 2px solid var(--gold); padding: 25px; width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; }
+        .modal-content { background: var(--card-bg); border: 2px solid var(--gold); padding: 25px; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; text-align: center; }
 
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; padding: 30px; }
         .product-card { border: 2px solid var(--gold); padding: 20px; background: var(--card-bg); text-align: center; position: relative; transition: 0.4s; }
@@ -42,6 +42,11 @@
 
         #admin-panel { display: none; max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid var(--gold); background: rgba(255, 255, 255, 0.05); }
         .delete-btn { position: absolute; top: 8px; right: 8px; background: #721c24; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+        
+        /* 付款資訊專屬樣式 */
+        .payment-box { background: #111; border: 1px dashed var(--gold); padding: 15px; margin: 15px 0; text-align: left; }
+        .payment-box h3 { color: var(--gold); margin-top: 0; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px;}
+        .qr-code-img { width: 100%; max-width: 250px; margin: 10px auto; display: block; border: 2px solid white; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -60,8 +65,29 @@
             <div class="form-group"><label>您的 E-mail *</label><input type="email" id="cust-email"></div>
             <div class="form-group"><label>聯絡電話 *</label><input type="tel" id="cust-phone"></div>
             <div class="form-group"><label>收件地址 *</label><textarea id="cust-address"></textarea></div>
-            <button id="submitBtn" class="btn-action" onclick="submitOrder()">確認訂購 (系統發送通知)</button>
+            <button id="submitBtn" class="btn-action" onclick="submitOrder()">確認訂購 (前往付款)</button>
             <button class="btn-nav" style="width:100%; border:none; margin-top:10px;" onclick="closeCart()">返回藝廊</button>
+        </div>
+    </div>
+
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="color:var(--gold);">🎉 訂單已成功送出！</h2>
+            <p style="color:white; font-size:1.1rem;">系統已發送訂單明細至您的信箱。<br>請透過以下方式完成付款，以利為您出貨：</p>
+            
+            <div class="payment-box">
+                <h3>🏦 銀行轉帳</h3>
+                <p style="color:white; margin:5px 0;">銀行：<b>彰化銀行 (代號：009)</b></p>
+                <p style="color:white; margin:5px 0;">帳號：<b style="color:var(--gold); font-size:1.2rem;">5703-95-02229-300</b></p>
+            </div>
+
+            <div class="payment-box">
+                <h3>📱 LINE Pay 掃碼付款</h3>
+                <img src="https://orjixadarchipiissgol.supabase.co/storage/v1/object/public/images/1772761727588_S__62390278.jpg" alt="LINE Pay QR Code" class="qr-code-img">
+            </div>
+
+            <p style="color:#aaa; font-size:0.9rem;">付款後請回覆系統確認信件，告知帳號後五碼或提供截圖。</p>
+            <button class="btn-action" onclick="finishAndReload()">完成並關閉</button>
         </div>
     </div>
 
@@ -69,7 +95,7 @@
 
     <section id="admin-panel">
         <h2 style="text-align:center; color:var(--gold);">雲端展品上架系統</h2>
-        <div class="form-group"><label>1. 上傳公仔照片 (系統會自動壓縮)</label><input type="file" id="imageInput" accept="image/*"></div>
+        <div class="form-group"><label>1. 上傳公仔或付款 QR Code (系統自動壓縮)</label><input type="file" id="imageInput" accept="image/*"></div>
         <div class="form-group"><label>2. 品名</label><input type="text" id="nameInput"></div>
         <div class="form-group"><label>3. 價格 (TWD)</label><input type="number" id="priceInput"></div>
         <button id="uploadBtn" class="btn-action" onclick="handleUpload()">確認新增並同步至雲端</button>
@@ -86,8 +112,6 @@
         // --- 2. EmailJS 系統發信設定 ---
         const EMAILJS_PUBLIC_KEY = "ALCpidIW3C2QAE48W"; 
         const EMAILJS_SERVICE_ID = "service_kzib859";
-        
-        // 已更新為您最新取得的正確 Template ID！
         const EMAILJS_TEMPLATE_ID = "template_6s7jtcr"; 
         
         // 初始化發信模組
@@ -165,7 +189,7 @@
                 const { error: dbError } = await _supabase.from('figurines').insert([{ name, price, image_url: imageUrl }]);
                 if (dbError) throw dbError;
 
-                alert('雲端新增成功！手機現在也能立刻看到了。');
+                alert('雲端新增成功！如果您是在上傳 QR Code，請對著新增的圖片按右鍵複製網址。');
                 location.reload();
             } catch (err) {
                 alert('發生錯誤：' + err.message);
@@ -174,13 +198,13 @@
         }
 
         async function deleteProduct(id) {
-            if (confirm('確定從雲端永久移除這件展品？')) {
+            if (confirm('確定從雲端永久移除這個項目？')) {
                 await _supabase.from('figurines').delete().eq('id', id);
                 location.reload();
             }
         }
 
-        // --- 5. 購物車與訂單系統 ---
+        // --- 5. 購物車與訂單發送系統 ---
         function addToCart(name, price) {
             cart.push({ name, price });
             localStorage.setItem('iris_cart', JSON.stringify(cart));
@@ -189,6 +213,8 @@
         }
 
         async function submitOrder() {
+            if(cart.length === 0) return alert('購物車是空的喔！');
+            
             const btn = document.getElementById('submitBtn');
             const custName = document.getElementById('cust-name').value;
             const custEmail = document.getElementById('cust-email').value;
@@ -200,8 +226,7 @@
             const orderDetails = cart.map(i => `- ${i.name} (NT$ ${Number(i.price).toLocaleString()})`).join('\n');
             let total = cart.reduce((sum, item) => sum + Number(item.price), 0);
 
-            // 系統自動發信邏輯 (透過 EmailJS)
-            btn.innerText = "系統自動發信中..."; btn.disabled = true;
+            btn.innerText = "系統自動發信與建立訂單中..."; btn.disabled = true;
             try {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
                     cust_name: custName,
@@ -210,11 +235,15 @@
                     cust_address: custAddress,
                     order_details: orderDetails + `\n\n總計金額：NT$ ${total.toLocaleString()}`
                 });
-                alert('訂單發送成功！買賣雙方均會收到系統郵件通知。');
-                cart = []; localStorage.removeItem('iris_cart'); location.reload();
+                
+                // 成功發信後，關閉購物車，清空紀錄，顯示付款視窗
+                cart = []; localStorage.removeItem('iris_cart');
+                document.getElementById('cart-modal').style.display = 'none';
+                document.getElementById('success-modal').style.display = 'flex';
+                
             } catch (err) { 
-                alert('發信失敗，請檢查 EmailJS 設定是否正確：\n' + JSON.stringify(err)); 
-                btn.innerText = "確認訂購 (系統發送通知)"; btn.disabled = false; 
+                alert('發信失敗，請檢查網路連線：\n' + JSON.stringify(err)); 
+                btn.innerText = "確認訂購 (前往付款)"; btn.disabled = false; 
             }
         }
 
@@ -225,6 +254,12 @@
 
         function openCart() { document.getElementById('cart-modal').style.display = 'flex'; }
         function closeCart() { document.getElementById('cart-modal').style.display = 'none'; }
+        
+        // 關閉成功畫面的按鈕，關閉後才重新整理網頁
+        function finishAndReload() {
+            document.getElementById('success-modal').style.display = 'none';
+            location.reload();
+        }
 
         window.onload = () => {
             if (isLoggedIn) document.getElementById('admin-panel').style.display = 'block';
